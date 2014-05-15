@@ -20,11 +20,25 @@ class Piece
     self.color == :black ? "⚫" : "⚪"
   end
   
-  def possible_spaces(n = 1)
+  def perform_moves!(*moves)
+    if moves.count == 1
+      perform_slide(self.pos, moves[0]) || 
+      perform_jump(self.pos, moves[0]) ||
+      perform_mega_jump(self.pos, moves[0])
+    else
+      start_pos = self.pos
+      
+      moves.each do |move|
+        perform_jump(start_pos, move)
+        start_pos = move
+      end
+    end
+  end
+  
+  def possible_spaces
     x, y = self.pos
-    
-    # n = number of spaces away you want to evaluate
-    move_diffs.map { |dir| [x + dir[0] * n, y + dir[1] * n] }
+
+    move_diffs.map { |dir| [x + dir[0], y + dir[1]] }
   end
   
   def valid_slide_spaces
@@ -75,6 +89,8 @@ class Piece
   end
   
   def perform_slide(start_pos, end_pos)
+    require 'pry'; binding.pry
+    
     if valid_slide_spaces.include?(end_pos)
       self.pos = end_pos
       self.board[end_pos] = self
