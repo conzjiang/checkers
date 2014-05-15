@@ -10,7 +10,7 @@ class Board
   
   def initialize(grid = Board.empty_grid)
     @grid = grid # ARRAY
-    #populate
+    # populate
   end
   
   def populate
@@ -63,14 +63,9 @@ class Board
     
     grid.each do |row|
       row.each do |piece|
-        bg_color = alternate == 1 ? :red : :black
+        bg_color = alternate == 1 ? :red : :green
         
-        if piece.nil?
-          to_print = "   "
-        else
-          to_print = " #{piece} "
-        end
-        
+        to_print = piece.nil? ? "   " : " #{piece} "
         print to_print.colorize(:background => bg_color)
         
         alternate = alternate == 1 ? 0 : 1

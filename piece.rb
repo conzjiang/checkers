@@ -1,3 +1,6 @@
+class InvalidMoveError < StandardError
+end
+
 class Piece
   attr_accessor :king, :pos
   
@@ -17,11 +20,22 @@ class Piece
   end
   
   def to_s
-    self.color == :black ? "⚫" : "⚪"
+    if self.king
+      self.color == :black ? "♛" : "♛".colorize(:white)
+    else
+      self.color == :black ? "❤" : "❤".colorize(:white)
+    end
   end
   
   def dup
     Piece.new(self.board.dup, self.pos.dup, self.color)
+  end
+  
+  def perform_moves(*moves)
+    raise InvalidMoveError unless valid_move_seq?(*moves)
+    
+    perform_moves!(*moves)
+    self.king = true if promote?
   end
   
   def valid_move_seq?(*moves)
@@ -36,17 +50,19 @@ class Piece
   
   def perform_moves!(*moves)
     if moves.count == 1
-      perform_slide(self.pos, moves[0]) || 
-      perform_jump(self.pos, moves[0]) ||
-      perform_mega_jump(self.pos, moves[0])
+      checks_out = perform_slide(self.pos, moves[0]) || 
+        perform_jump(self.pos, moves[0]) ||
+        perform_mega_jump(self.pos, moves[0])
     else
       start_pos = self.pos
       
       moves.each do |move|
-        perform_jump(start_pos, move)
+        checks_out = perform_jump(start_pos, move)
         start_pos = move
       end
     end
+    
+    raise "Invalid move!" unless checks_out
   end
   
   def possible_spaces
@@ -70,7 +86,9 @@ class Piece
     # returns Piece's new possible spaces after jumping over enemy
     
     enemy_spaces = possible_spaces.select do |space| 
-      !self.board.empty?(space) && self.board.has_enemy?(space, self.color)
+      !self.board.empty?(space) && 
+      self.board.has_enemy?(space, self.color) &&
+      on_the_board?(space)
     end
     
     jump_to_spaces = []
@@ -86,7 +104,9 @@ class Piece
   end
   
   def valid_mega_jump_spaces
-    one_space_aways = possible_spaces.select { |space| self.board.empty?(space) }
+    one_space_aways = possible_spaces.select do |space| 
+      self.board.empty?(space) && on_the_board?(space)
+    end
     
     mega_jump_spaces = []
     
@@ -160,6 +180,7 @@ class Piece
   end
   
   def promote?
-    # when piece reaches back row, check to promote
+    (self.color == :white && self.pos[0] == 7) ||
+    (self.color == :black && self.pos[0] == 0)
   end
 end
