@@ -1,3 +1,4 @@
+require 'pry'
 class InvalidMoveError < StandardError
 end
 
@@ -12,7 +13,7 @@ class Piece
     @color = color
     @king = false
     
-    @board[pos] = self
+    self.board[pos] = self
   end
   
   def dir(start_pos, end_pos)
@@ -27,10 +28,6 @@ class Piece
     end
   end
   
-  def dup
-    Piece.new(self.board.dup, self.pos.dup, self.color)
-  end
-  
   def perform_moves(*moves)
     raise InvalidMoveError unless valid_move_seq?(*moves)
     
@@ -40,7 +37,7 @@ class Piece
   
   def valid_move_seq?(*moves)
     begin
-      self.dup.perform_moves!(*moves)
+      self.board.dup[self.pos].perform_moves!(*moves)
     rescue
       return false
     end
@@ -68,7 +65,8 @@ class Piece
   def possible_spaces
     x, y = self.pos
 
-    move_diffs.map { |dir| [x + dir[0], y + dir[1]] }
+    poss_spaces = move_diffs.map { |dir| [x + dir[0], y + dir[1]] }
+    poss_spaces.select { |space| on_the_board?(space) }
   end
   
   def on_the_board?(coord)
@@ -76,8 +74,8 @@ class Piece
   end
   
   def valid_slide_spaces
-    possible_spaces.select do |space| 
-      self.board.empty?(space) && on_the_board?(space)
+    possible_spaces.select do |space|
+      self.board.empty?(space)
     end
   end
   
@@ -87,8 +85,7 @@ class Piece
     
     enemy_spaces = possible_spaces.select do |space| 
       !self.board.empty?(space) && 
-      self.board.has_enemy?(space, self.color) &&
-      on_the_board?(space)
+      self.board.has_enemy?(space, self.color)
     end
     
     jump_to_spaces = []
@@ -96,8 +93,10 @@ class Piece
     enemy_spaces.each do |x, y|
       dir_x, dir_y = x - self.pos[0], y - self.pos[1]
       jump_to_space = [x + dir_x, y + dir_y]
-      
-      jump_to_spaces << jump_to_space if self.board.empty?(jump_to_space)
+
+      if on_the_board?(jump_to_space) && self.board.empty?(jump_to_space)
+        jump_to_spaces << jump_to_space
+      end
     end
     
     jump_to_spaces
@@ -105,7 +104,7 @@ class Piece
   
   def valid_mega_jump_spaces
     one_space_aways = possible_spaces.select do |space| 
-      self.board.empty?(space) && on_the_board?(space)
+      self.board.empty?(space)
     end
     
     mega_jump_spaces = []
@@ -115,10 +114,10 @@ class Piece
       dir_x, dir_y = x - self.pos[0], y - self.pos[1]
       enemy_space = [x + dir_x, y + dir_y]
       
-      if self.board.has_enemy?(enemy_space, self.color)
+      if on_the_board?(jump_to_space) && self.board.has_enemy?(enemy_space, self.color)
         next_space = [enemy_space[0] + dir_x, enemy_space[1] + dir_y]
         
-        if self.board.empty?(next_space)
+        if on_the_board?(jump_to_space) && self.board.empty?(next_space)
           final_space = [next_space[0] + dir_x, next_space[1] + dir_y]
           mega_jump_spaces << final_space if self.board.empty?(final_space)
         end
@@ -135,7 +134,7 @@ class Piece
       self.board[start_pos] = nil
       return true
     end
-    
+
     false
   end
   
