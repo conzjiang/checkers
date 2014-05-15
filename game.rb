@@ -15,7 +15,7 @@ class Game
     player = :black
     
     until won?
-      prompt(player)
+      move_seq = prompt(player)
       
       turn = turn == :black ? :white : :black
     end
@@ -24,6 +24,11 @@ class Game
   def prompt(color)
     puts "What's the position of the piece you want to move?"
     start_pos = parse(gets.chomp.strip)
+    
+    puts "Where would you like to move him?"
+    move_seq = parse(gets.chomp.strip)
+    
+    [start_pos, move_seq]
   end
   
   def parse(input)
