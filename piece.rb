@@ -59,8 +59,6 @@ class Piece
   end
   
   def perform_slide(start_pos, end_pos)
-    x, y = start_pos
-    
     if valid_slide_spaces.include?(end_pos)
       self.pos = end_pos
       self.board[end_pos] = self
@@ -72,21 +70,10 @@ class Piece
   end
   
   def perform_jump(start_pos, end_pos)
-    x, y = start_pos
-    
-    good_to_go = valid_spaces(start_pos)
-
-    direction = move_diffs.find do |dir|
-      space = [x + dir[0], y + dir[1]]
-      
-      board.empty?(end_pos) &&
-      !board.empty?(space) && 
-      board[space].color != color &&
-      end_pos == [space[0] + dir[0], space[1] + dir[1]]
-    end
-    
-    if direction
-      conquered_space = [x + direction[0], y + direction[1]]
+    if valid_jump_spaces.include?(end_pos)
+      dir_x = (end_pos[0] - start_pos[0]) / 2
+      dir_y = (end_pos[1] - start_pos[1]) / 2
+      conquered_space = [start_pos[0] + dir_x, start_pos[1] + dir_y]
       
       self.pos = end_pos
       board[end_pos] = self
