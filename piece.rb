@@ -20,6 +20,20 @@ class Piece
     self.color == :black ? "⚫" : "⚪"
   end
   
+  def dup
+    Piece.new(self.board.dup, self.pos.dup, self.color)
+  end
+  
+  def valid_move_seq?(*moves)
+    begin
+      self.dup.perform_moves!(*moves)
+    rescue
+      return false
+    end
+    
+    true
+  end
+  
   def perform_moves!(*moves)
     if moves.count == 1
       perform_slide(self.pos, moves[0]) || 
@@ -41,8 +55,14 @@ class Piece
     move_diffs.map { |dir| [x + dir[0], y + dir[1]] }
   end
   
+  def on_the_board?(coord)
+    coord.all? { |x| x.between?(0, 7) }
+  end
+  
   def valid_slide_spaces
-    possible_spaces.select { |space| self.board.empty?(space) }
+    possible_spaces.select do |space| 
+      self.board.empty?(space) && on_the_board?(space)
+    end
   end
   
   def valid_jump_spaces(start_pos = self.pos)
@@ -88,9 +108,7 @@ class Piece
     mega_jump_spaces
   end
   
-  def perform_slide(start_pos, end_pos)
-    require 'pry'; binding.pry
-    
+  def perform_slide(start_pos, end_pos)    
     if valid_slide_spaces.include?(end_pos)
       self.pos = end_pos
       self.board[end_pos] = self
