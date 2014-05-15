@@ -48,6 +48,16 @@ class Board
     !self.empty?(space) && self[space].color != my_color
   end
   
+  def dup
+    board_dup = Board.new
+    
+    grid.flatten.compact.each do |piece|
+      piece.class.new(board_dup, piece.pos.dup, piece.color)
+    end
+    
+    board_dup
+  end
+  
   def display
     alternate = 1
     
