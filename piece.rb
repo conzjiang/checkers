@@ -12,6 +12,10 @@ class Piece
     @board[pos] = self
   end
   
+  def dir(start_pos, end_pos)
+    # write method for determining direction
+  end
+  
   def to_s
     self.color == :black ? "⚫" : "⚪"
   end
@@ -38,7 +42,7 @@ class Piece
     jump_to_spaces = []
     
     enemy_spaces.each do |x, y|
-      dir_x, dir_y = x - start_pos[0], y - start_pos[1]
+      dir_x, dir_y = x - self.pos[0], y - self.pos[1]
       jump_to_space = [x + dir_x, y + dir_y]
       
       jump_to_spaces << jump_to_space if self.board.empty?(jump_to_space)
@@ -50,12 +54,24 @@ class Piece
   def valid_mega_jump_spaces
     one_space_aways = possible_spaces.select { |space| self.board.empty?(space) }
     
-    one_space_aways.map do |space|
-      dir_x, dir_y = x - start_pos[0], y - start_pos[1]
+    mega_jump_spaces = []
+    
+    one_space_aways.each do |space|
+      x, y = space
+      dir_x, dir_y = x - self.pos[0], y - self.pos[1]
       enemy_space = [x + dir_x, y + dir_y]
       
-      
-    end  
+      if self.board.has_enemy?(enemy_space, self.color)
+        next_space = [enemy_space[0] + dir_x, enemy_space[1] + dir_y]
+        
+        if self.board.empty?(next_space)
+          final_space = [next_space[0] + dir_x, next_space[1] + dir_y]
+          mega_jump_spaces << final_space if self.board.empty?(final_space)
+        end
+      end
+    end
+    
+    mega_jump_spaces
   end
   
   def perform_slide(start_pos, end_pos)
@@ -86,22 +102,10 @@ class Piece
   end
   
   def perform_mega_jump(start_pos, end_pos)
-    x, y = start_pos
-
-    direction = move_diffs.find do |dir|
-      space = [x + dir[0], y + dir[1]]
-      space_to_conquer = [x + dir[0] * 2, y + dir[1] * 2]
-      other_space = [x + dir[0] * 3, y + dir[1] * 3]
-
-      board.empty?(space) &&
-      !board.empty?(space_to_conquer) &&
-      board[space_to_conquer].color != color &&
-      board.empty?(other_space) &&
-      board.empty?(end_pos)
-    end
-    
-    if direction
-      conquered_space = [x + direction[0] * 2, y + direction[1] * 2]
+    if valid_mega_jump_spaces.include?(end_pos)
+      dir_x = (end_pos[0] - start_pos[0]) / 2
+      dir_y = (end_pos[1] - start_pos[1]) / 2
+      conquered_space = [start_pos[0] + dir_x, start_pos[1] + dir_y]
       
       self.pos = end_pos
       board[end_pos] = self
